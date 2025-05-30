@@ -1,10 +1,12 @@
 const express = require('express');
 
 const app = express();
+const userRouter = require("./user");
 
-app.get("/", (req, res) => {
-    res.send("Hello World")
-})
+app.use(express.json());
+app.use(express.urlencoded());
+
+app.use("/users", userRouter)
 
 const PORT = 5001;
 

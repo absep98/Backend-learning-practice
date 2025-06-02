@@ -1,12 +1,14 @@
 const express = require("express");
 const app = express();
 const router = express.Router();
-
+const { v4: uuidv4} = require("uuid");
+const fs = require("fs");
 
 let users = [
     { id: 1, name: "Alice"},
     { id: 2, name: "Bob"}
 ];
+
 
 router.get("/", (req, res) => {
     res.json(users);
@@ -22,7 +24,7 @@ router.get("/:id", (req, res) => {
 
 router.post("/", (req, res) => {
     const {name} = req.body;
-    const newUser = { id: Date.now(), name};
+    const newUser = { id: uuidv4(), name};
     users.push(newUser);
     res.status(201).json(newUser);
 })

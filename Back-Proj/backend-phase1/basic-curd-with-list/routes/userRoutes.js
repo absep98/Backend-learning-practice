@@ -1,7 +1,6 @@
 const express = require("express");
-const app = express();
 const router = express.Router();
-const User = require("../Schema/userSchema")
+const User = require("../Models/userModel")
 const { v4: uuidv4} = require("uuid");
 const fs = require("fs");
 const Joi = require("joi");
@@ -28,6 +27,12 @@ router.get("/", async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: "Failed to fetch all user's data."})
     }
+})
+
+router.get("/fail", (req, res, next) => {
+    const error = new Error('Intential Failures');
+    error.status = 418;
+    next(error);
 })
 
 router.get("/:id", async (req, res) => {
@@ -76,5 +81,7 @@ router.delete("/:id", async (req, res) => {
         res.status(500).json({error : "Internal Server Error"});
     }
 });
+
+
 
 module.exports = router;

@@ -1,4 +1,4 @@
 module.exports = [
-    { username : "alice", passowrd: "12345"},
-    { username : "bob", passowrd: "qwerty"}
+    { username : "alice", password: "12345"},
+    { username : "bob", password: "qwerty"}
 ]

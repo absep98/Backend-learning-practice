@@ -1,22 +1,26 @@
 const jwt = require("jsonwebtoken");
-const MYSECRETKEY = "mysecretkey";
+const MYSECRETKEY = process.env.JWT_SECRET || "mysecretkey";
 
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1];
+
+    if(!authHeader || !authHeader.startsWith("Bearer ")){
+        return res.status(401).json({ error: "Authorization header is missing or invalid. "})
+    }
+
+    const token = authHeader.split(" ")[1];
 
     if(!token) {
         return res.status(401).json({ error: "Access denied. No token provided"});
     }
     
-    jwt.verify(token, MYSECRETKEY, (err, user) => {
-        if(err) {
-            return res.status(401).json({message: "Invalid or expired token"});
-        }
-        console.log("Decoded token ", user);
-        req.user = user;
+    try {
+        const decoded = jwt.verify(token, MYSECRETKEY);
+        req.user = decoded;
         next();
-    });
+    } catch (error) {
+        return res.status(403).json({ error: "Invalid token."});
+    }
 };
 
 module.exports = authenticateToken;

@@ -22,6 +22,11 @@ const userSchema = new mongoose.Schema({
         enum: ["admin", "user"],
         default: "user",
     },
+    isVerified: {
+        type: Boolean,
+        default: false,
+    },
+    verificationToken: String,
 });
 
 const userModel = mongoose.model("bcryptusers", userSchema);

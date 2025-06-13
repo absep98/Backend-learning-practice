@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { login, signup } = require("../controllers/authController")
+const { login, signup, logout } = require("../controllers/authController")
 const authenticateToken = require("../middleware/authMiddeware");
 const { checkRole } = require("../middleware/checkRole");
 const jwt = require('jsonwebtoken');
@@ -60,18 +60,54 @@ router.get("/debug-cookies", (req, res) => {
     });
 });
 
-router.post("/logout", (req, res) => {
-    res.clearCookie("accessToken", {
-        httpOnly: true,
-        secure: false,
-        sameSite: "strict",
-    });
-    res.clearCookie("refreshToken", {
-        httpOnly: true,
-        secure: false,
-        sameSite: "strict"
-    });
-    res.status(200).json({message:"Logged out successfully"});
+router.get("/verify/:token", async(req, res) => {
+    try {
+        const user = await User.findOne({ verificationToken: req.params.token });
+        if(!user) {
+            return res.status(404).json({ error: "User not found." });
+        }
+        
+        user.isVerified = true;
+        user.verificationToken = undefined;
+        await user.save();
+
+        res.status(200).json({ message: "Email verified successfully!" });
+
+    } catch (error) {
+        
+    }
 })
 
+router.post("/logout", logout)
+
 module.exports = router;
+
+// Manual verification endpoint for development
+router.post("/verify-user", async (req, res) => {
+    try {
+        const { email } = req.body;
+        
+        if (!email) {
+            return res.status(400).json({ error: "Email is required" });
+        }
+        
+        const Users = require("../models/userModel");
+        const user = await Users.findOne({ email });
+        
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+        
+        if (user.isVerified) {
+            return res.status(200).json({ message: "User is already verified" });
+        }
+        
+        user.isVerified = true;
+        await user.save();
+        
+        res.status(200).json({ message: "User verified successfully" });
+    } catch (error) {
+        console.error("Verification error:", error);
+        res.status(500).json({ error: "Failed to verify user" });
+    }
+});

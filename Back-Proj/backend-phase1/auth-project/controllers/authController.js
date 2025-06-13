@@ -1,6 +1,8 @@
 const jwt = require("jsonwebtoken");
 const Users = require("../models/userModel");
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
+const sendVerificationEmail = require("../utils/sendVerificationEmail");
 
 const SECRET_KEY = process.env.JWT_SECRET || "mysecretkey";
 
@@ -35,10 +37,24 @@ const signup = async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
+        const token = crypto.randomBytes(32).toString("hex");
+        const user = new Users({
+            username,
+            email,
+            password: hashedPassword, 
+            role,
+            isVerified: false,
+            verificationToken: token 
+        });
 
-        const user = new Users({ username, email, password: hashedPassword, role });
         await user.save();
-        res.status(201).json({ message: "User registered successfully..!" });
+
+        // Send a verification email link
+
+        await sendVerificationEmail(email, token);
+
+        res.status(201).json({ message: "Signup successfull.Please check your email for verification link.!" });
+
     } catch (error) {
         console.error("Signup error:", error);
         res.status(500).json({ error: "Something went wrong!" })
@@ -58,6 +74,9 @@ const login = async (req, res) => {
             return res.status(400).json({ error: "Invalid email or password." });
         }
 
+        if(!user.isVerified){
+            return res.status(401).json({ error: "Please verify your account first." });
+        }
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
@@ -103,4 +122,29 @@ const login = async (req, res) => {
     }
 };
 
-module.exports = { login, signup };
+const logout = async (req, res) => {
+    try {
+        const refreshToken = req.cookies.refreshToken;
+
+        if (refreshToken) {
+            refreshTokensStore.delete(refreshToken);
+        }
+
+        res.clearCookie("accessToken", {
+            httpOnly: true,
+            secure: false,
+            sameSite: "strict",
+        });
+        res.clearCookie("refreshToken", {
+            httpOnly: true,
+            secure: false,
+            sameSite: "strict"
+        });
+        res.status(200).json({ message: "Logged out successfully" });
+    } catch (error) {
+        console.error("Logout error: ", error);
+        res.status(500).json({ error: "Failed to log out" });
+    }
+};
+
+module.exports = { login, signup, logout };

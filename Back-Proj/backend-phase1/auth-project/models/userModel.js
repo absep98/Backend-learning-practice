@@ -27,6 +27,8 @@ const userSchema = new mongoose.Schema({
         default: false,
     },
     verificationToken: String,
+    resetPasswordToken: String,
+    resetPasswordExpires: Date,
 });
 
 const userModel = mongoose.model("bcryptusers", userSchema);

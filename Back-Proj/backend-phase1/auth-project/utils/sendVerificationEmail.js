@@ -3,16 +3,20 @@ const nodemailer = require("nodemailer");
 const sendVerificationEmail = async (toEmail, token) => {
     const verificationLink = `http://localhost:5000/verify/${token}`;
 
+    const testAccount = await nodemailer.createTestAccount();
+
     const transporter = nodemailer.createTransport({
-        service: "gmail",
+        host: "smtp.ethereal.email",
+        port: 587,
+        secure: false,
         auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASSWORD
+            user: testAccount.user,
+            pass: testAccount.pass
         }
     });
 
-    const mailOptions = {
-        from: `"Auth App": <${process.env.EMAIL_USER}>`,
+    const info = await transporter.sendMail({
+        from: `"Auth App" <no-reply@authapp.com>`,
         to: toEmail,
         subject: "Verify your email address",
         html: `
@@ -21,10 +25,10 @@ const sendVerificationEmail = async (toEmail, token) => {
             <a href="${verificationLink}">${verificationLink}</a>
             <p>This link will expire in 5 minutes.</p>
         `
-    };
+    });
 
-    await transporter.sendMail(mailOptions);
-
+   console.log("Preview email at : ", nodemailer.getTestMessageUrl(info));
+   
 }
 
 module.exports = sendVerificationEmail;

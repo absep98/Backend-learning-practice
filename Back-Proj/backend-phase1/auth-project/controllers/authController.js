@@ -3,10 +3,12 @@ const Users = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const sendVerificationEmail = require("../utils/sendVerificationEmail");
-
+const sendResetPasswordEmail = require("../utils/sendResetPasswordEmail")
+const User = require("../models/userModel");
 const SECRET_KEY = process.env.JWT_SECRET || "mysecretkey";
 
 const { refreshTokensStore } = require("../utils/tokenStore");
+const { log, error } = require("console");
 
 const signup = async (req, res) => {
     try {
@@ -50,7 +52,8 @@ const signup = async (req, res) => {
         await user.save();
 
         // Send a verification email link
-
+        console.log(token, email);
+        
         await sendVerificationEmail(email, token);
 
         res.status(201).json({ message: "Signup successfull.Please check your email for verification link.!" });
@@ -147,4 +150,33 @@ const logout = async (req, res) => {
     }
 };
 
-module.exports = { login, signup, logout };
+
+// user submit the email, if it exist and verified we generate the a reset token  and send a reset link 
+const forgotPassword = async(req, res) => {
+    const { email } = req.body;
+    try {
+        const user = await User.findOne({ email });
+
+        if(!user || !user.isVerified){
+            return res.status(400).json({ error : "User not found or not verified."});
+        }
+
+        const resetToken = crypto.randomBytes(32).toString("hex");
+        const tokenExpiry = Date.now() + 1000 * 60 * 10;
+
+        user.resetPasswordToken = resetToken;
+        user.resetPasswordExpires = tokenExpiry;
+
+        await user.save();
+
+        await sendResetPasswordEmail(email, resetToken);
+
+        res.status(200).json({ message: "Password reset link sent to the email."})
+
+    } catch (error) {
+        console.log("Forgot password error: ", error);
+        res.status(500).json({ error: "Internal server error. "});
+    }
+}
+
+module.exports = { login, signup, logout, forgotPassword };

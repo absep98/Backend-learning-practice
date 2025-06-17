@@ -102,14 +102,14 @@ const login = async (req, res) => {
 
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
-            secure: false,
+            secure: process.env.NODE_ENV === "production",
             maxAge: 60 * 60 * 24 * 7 * 1000, // 7 days in milliseconds
             sameSite: 'strict'
         });
 
         res.cookie('accessToken', accessToken, {
             httpOnly: true,
-            secure: false,
+            secure: process.env.NODE_ENV === "production",
             maxAge: 3600 * 1000, // 1 hour in milliseconds
             sameSite: 'strict',
         });

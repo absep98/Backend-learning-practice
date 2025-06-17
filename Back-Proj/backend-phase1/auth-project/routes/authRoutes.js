@@ -5,12 +5,13 @@ const { login, signup, logout, forgotPassword } = require("../controllers/authCo
 const authenticateToken = require("../middleware/authMiddeware");
 const { checkRole } = require("../middleware/checkRole");
 const jwt = require('jsonwebtoken');
+const rateLimit = require("../middleware/rateLimiter");
 const { refreshTokensStore } = require("../utils/tokenStore");
 const User = require("../models/userModel");
 
 router.post("/signup", signup);
 
-router.post("/login", login);
+router.post("/login", rateLimit, login);
 
 router.post("/refresh", (req, res) => {
     // Try to get refresh token from cookies first, then from body
@@ -50,6 +51,10 @@ router.get("/admin-only", authenticateToken, checkRole("admin"), (req, res) => {
         message:`You are an admin. You can access this route`
     });
 });
+
+router.get("/dashboard", authenticateToken, checkRole("admin"), (req, res) => {
+    res.status(200).json({ message: "Welcome to the admin dashboard! "});
+})
 
 // Debug route to check cookies
 router.get("/debug-cookies", (req, res) => {

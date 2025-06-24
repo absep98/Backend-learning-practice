@@ -21,8 +21,9 @@ app.use(cors({
 app.use(cookieParser());
 app.use(helmet());
 //routes
-app.use("/api/auth", authRoutes)
-app.use("/api/uploads", express.static("uploads"));
+app.use("/api/auth", authRoutes);
+app.use("/uploads", uploadRoutes);
+app.use("/uploads", express.static("uploads"));
 
 app.use((req, res) => {
     res.status(404).send({
